@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>画布扩展 · Canvas Expander</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+      background: #f4f7fb;
+      color: #1e293b;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .app {
+      max-width: 1400px;
+      width: 100%;
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
+      padding: 24px;
+    }
+    h1 {
+      font-weight: 600;
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+    .sub {
+      color: #64748b;
+      margin-bottom: 24px;
+      border-left: 4px solid #3b82f6;
+      padding-left: 16px;
+    }
+    .main-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .library {
+      flex: 1.2;
+      min-width: 200px;
+      background: #f8fafc;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+    }
+    .library-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .library-header h3 {
+      font-size: 1rem;
+      color: #475569;
+    }
+    .library-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .icon-btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 30px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .icon-btn:hover {
+      background: #fee2e2;
+      border-color: #f87171;
+    }
+    .upload-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .thumb-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .thumb-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      position: relative;
+    }
+    .thumb-item.active {
+      border: 2px solid #3b82f6;
+      background: #eff6ff;
+    }
+    .thumb-img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      background: #f1f5f9;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .thumb-info {
+      flex: 1;
+      overflow: hidden;
+    }
+    .thumb-name {
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .thumb-size {
+      font-size: 0.7rem;
+      color: #64748b;
+    }
+    .thumb-delete {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 20px;
+      opacity: 0.6;
+      transition: 0.2s;
+    }
+    .thumb-delete:hover {
+      background: #fee2e2;
+      color: #ef4444;
+      opacity: 1;
+    }
+    .preview-area {
+      flex: 3;
+      min-width: 500px;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .canvas-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f1f5f9;
+      border-radius: 20px;
+      min-height: 380px;
+      background-image: linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+        linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+        linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: #e2e8f0;
+      overflow: hidden;
+    }
+    #previewCanvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      cursor: default;
+    }
+    .controls {
+      flex: 1.45;
+      min-width: 260px;
+      background: #f8fafc;
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .control-group {
+      margin-bottom: 26px;
+    }
+    .control-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    .dimension-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dimension-input input {
+      width: 80px;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      font-size: 0.9rem;
+    }
+    .ratio-selector {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .ratio-btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 30px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .ratio-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    .lock-btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 30px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .lock-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    .action-btn {
+      background: #0f172a;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      padding: 14px 18px;
+      font-weight: 600;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .action-btn.secondary {
+      background: white;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+    }
+    .status-bar {
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #475569;
+    }
+    .offset-info {
+      background: #eef2ff;
+      border-radius: 16px;
+      padding: 12px;
+      font-size: 0.8rem;
+    }
+    .view-hint {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🖼️ 画布扩展 · Canvas Expander · Free Ratio</h1>
+  <div class="sub">拖拽选框边缘/角落调整画布 · 原图偏移量自由调节 · 滚轮缩放 · 批量导出</div>
+
+  <div class="main-panel">
+    <div class="library">
+      <div class="library-header">
+        <h3>📁 图片列表</h3>
+        <div class="library-actions">
+          <button class="icon-btn" id="clearAllBtn" title="清空所有图片">🗑️ 清空</button>
+          <button class="upload-btn" id="uploadBtn">+ 上传</button>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+      <div class="thumb-list" id="thumbList"></div>
+      <p style="font-size:0.7rem; color:#64748b; margin-top:8px;">点击缩略图切换 · 点击 ✕ 删除单张</p>
+    </div>
+
+    <div class="preview-area">
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="previewCanvas" width="700" height="460"></canvas>
+      </div>
+      <div class="view-hint">
+        <span> 拖动边/角调整画布 · 拖动选框移动位置</span>
+        <span> 滚轮缩放 · 双击重置视图</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+        <span id="dimDisplay"></span>
+        <div style="display:flex; gap:12px;">
+          <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem;">
+            <input type="checkbox" id="showGuideCheck" checked> 📏 三等分参考线
+          </label>
+          <button id="resetViewBtn" style="background:none; border:1px solid #cbd5e1; border-radius:20px; padding:2px 12px; font-size:0.75rem;">重置视图</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>📐 画布尺寸 (像素)</label>
+        <div class="dimension-input">
+          <input type="number" id="widthInput" min="1" max="40000" step="1" value="800">
+          <span>✕</span>
+          <input type="number" id="heightInput" min="1" max="40000" step="1" value="600">
+          <button class="lock-btn" id="lockRatioBtn">🔓 自由比例</button>
+        </div>
+        <div class="ratio-selector">
+          <button class="ratio-btn" data-ratio="free">自由</button>
+          <button class="ratio-btn" data-ratio="1:1">1:1</button>
+          <button class="ratio-btn" data-ratio="4:3">4:3</button>
+          <button class="ratio-btn" data-ratio="16:9">16:9</button>
+          <button class="ratio-btn" data-ratio="3:2">3:2</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button id="centerBtn" style="flex:1; background:#eef2ff; border:none; border-radius:30px; padding:8px;">居中</button>
+          <button id="fitImageBtn" style="flex:1; background:#eef2ff; border:none; border-radius:30px; padding:8px;">适应原图</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>🎨 扩展背景选择</label>
+        <div><label><input type="radio" name="bgType" value="transparent" checked> 透明</label></div>
+        <div><label><input type="radio" name="bgType" value="white"> 白色</label></div>
+        <div><label><input type="radio" name="bgType" value="black"> 黑色</label></div>
+        <label style="margin-top:11px;"><input type="checkbox" id="keepFormatCheck" checked> 保留原始格式</label>
+      </div>
+
+      <div class="offset-info">
+        📍 原图偏移: X <span id="offsetXVal">0</span> , Y <span id="offsetYVal">0</span>
+        <div style="font-size:0.7rem; margin-top:4px; color:#475569;">批量导出时将应用此偏移 (自动约束边界)</div>
+      </div>
+
+      <button class="action-btn" id="processAllBtn">✨ 批量扩展并下载 (ZIP)</button>
+      <button class="action-btn secondary" id="applyCurrentBtn">📋 应用到当前预览</button>
+      <div class="status-bar" id="statusMsg">就绪，可上传图片与调整画布</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script>
+  (function(){
+    const state = {
+      images: [],
+      activeIndex: -1,
+      targetWidth: 800,
+      targetHeight: 600,
+      offsetX: 0,
+      offsetY: 0,
+      keepRatio: false,
+      ratioValue: 1.0,
+      bgType: 'transparent',
+      keepFormat: true,
+      showGuide: true,
+    };
+
+    // 视图控制
+    let viewZoom = 1.0;
+    let viewPanX = 0;
+    let viewPanY = 0;
+    const MIN_ZOOM = 0.2;
+    const MAX_ZOOM = 5.0;
+
+    const canvas = document.getElementById('previewCanvas');
+    const ctx = canvas.getContext('2d');
+    const widthInput = document.getElementById('widthInput');
+    const heightInput = document.getElementById('heightInput');
+    const lockRatioBtn = document.getElementById('lockRatioBtn');
+    const offsetXSpan = document.getElementById('offsetXVal');
+    const offsetYSpan = document.getElementById('offsetYVal');
+    const dimDisplay = document.getElementById('dimDisplay');
+    const statusMsg = document.getElementById('statusMsg');
+    const thumbList = document.getElementById('thumbList');
+    const showGuideCheck = document.getElementById('showGuideCheck');
+    
+    const CANVAS_W = 700, CANVAS_H = 460;
+    
+    let isDragging = false;
+    let dragMode = null;
+    let dragStart = { x: 0, y: 0 };
+    let dragStartOffset = { x: 0, y: 0 };
+    let dragStartSize = { w: 0, h: 0 };
+    let displayTransform = { scale: 1, offsetX: 0, offsetY: 0 };
+
+    function canvasToWorld(mx, my) {
+      return { x: (mx - viewPanX) / viewZoom, y: (my - viewPanY) / viewZoom };
+    }
+
+    function resetView() {
+      viewZoom = 1.0;
+      viewPanX = 0;
+      viewPanY = 0;
+      drawPreview();
+    }
+
+    function updateUI() {
+      widthInput.value = state.targetWidth;
+      heightInput.value = state.targetHeight;
+      lockRatioBtn.textContent = state.keepRatio ? '🔒 比例锁定' : '🔓 自由比例';
+      lockRatioBtn.classList.toggle('active', state.keepRatio);
+      document.querySelectorAll('.ratio-btn').forEach(btn => {
+        btn.classList.remove('active');
+        const ratio = btn.dataset.ratio;
+        if (ratio === 'free' && !state.keepRatio) btn.classList.add('active');
+        else if (state.keepRatio) {
+          const val = state.ratioValue;
+          if (ratio === '1:1' && Math.abs(val-1) < 0.01) btn.classList.add('active');
+          else if (ratio === '4:3' && Math.abs(val-4/3) < 0.01) btn.classList.add('active');
+          else if (ratio === '16:9' && Math.abs(val-16/9) < 0.01) btn.classList.add('active');
+          else if (ratio === '3:2' && Math.abs(val-1.5) < 0.01) btn.classList.add('active');
+        }
+      });
+      document.querySelectorAll('input[name="bgType"]').forEach(r => {
+        if (r.value === state.bgType) r.checked = true;
+      });
+      document.getElementById('keepFormatCheck').checked = state.keepFormat;
+      showGuideCheck.checked = state.showGuide;
+    }
+
+    function clampOffset(imgW, imgH) {
+      const maxX = Math.max(0, state.targetWidth - imgW);
+      const maxY = Math.max(0, state.targetHeight - imgH);
+      state.offsetX = Math.min(maxX, Math.max(0, state.offsetX));
+      state.offsetY = Math.min(maxY, Math.max(0, state.offsetY));
+    }
+
+    function updateOffsetDisplay() {
+      offsetXSpan.textContent = Math.round(state.offsetX);
+      offsetYSpan.textContent = Math.round(state.offsetY);
+    }
+
+    function centerOffset() {
+      if (state.activeIndex === -1) return;
+      const img = state.images[state.activeIndex];
+      state.offsetX = Math.max(0, (state.targetWidth - img.width) / 2);
+      state.offsetY = Math.max(0, (state.targetHeight - img.height) / 2);
+      clampOffset(img.width, img.height);
+      updateOffsetDisplay();
+      drawPreview();
+    }
+
+    function fitCanvasToImage() {
+      if (state.activeIndex === -1) return;
+      const img = state.images[state.activeIndex];
+      const padding = 40;
+      state.targetWidth = img.width + padding * 2;
+      state.targetHeight = img.height + padding * 2;
+      if (state.keepRatio) {
+        const maxDim = Math.max(state.targetWidth, state.targetHeight);
+        state.targetWidth = maxDim;
+        state.targetHeight = maxDim;
+      }
+      state.offsetX = padding;
+      state.offsetY = padding;
+      clampOffset(img.width, img.height);
+      updateUI();
+      updateOffsetDisplay();
+      drawPreview();
+    }
+
+    function drawPreview() {
+      if (state.activeIndex === -1) {
+        ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        return;
+      }
+      const imgObj = state.images[state.activeIndex];
+      const imgEl = imgObj.imgElement;
+      const imgW = imgObj.width, imgH = imgObj.height;
+      
+      const canvasAspect = CANVAS_W / CANVAS_H;
+      const imgAspect = imgW / imgH;
+      let drawW, drawH, drawX, drawY;
+      if (imgAspect > canvasAspect) {
+        drawW = CANVAS_W; drawH = CANVAS_W / imgAspect;
+        drawX = 0; drawY = (CANVAS_H - drawH) / 2;
+      } else {
+        drawH = CANVAS_H; drawW = CANVAS_H * imgAspect;
+        drawX = (CANVAS_W - drawW) / 2; drawY = 0;
+      }
+      
+      displayTransform.scale = drawW / imgW;
+      displayTransform.offsetX = drawX;
+      displayTransform.offsetY = drawY;
+      
+      ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+      ctx.save();
+      ctx.translate(viewPanX, viewPanY);
+      ctx.scale(viewZoom, viewZoom);
+      
+      ctx.drawImage(imgEl, drawX, drawY, drawW, drawH);
+      
+      const boxX = drawX - state.offsetX * displayTransform.scale;
+      const boxY = drawY - state.offsetY * displayTransform.scale;
+      const boxW = state.targetWidth * displayTransform.scale;
+      const boxH = state.targetHeight * displayTransform.scale;
+      
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.restore();
+      
+      if (state.showGuide) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 1.5 / viewZoom;
+        const thirdW = boxW / 3;
+        for (let i = 1; i <= 2; i++) {
+          const lineX = boxX + i * thirdW;
+          ctx.moveTo(lineX, boxY);
+          ctx.lineTo(lineX, boxY + boxH);
+        }
+        const thirdH = boxH / 3;
+        for (let i = 1; i <= 2; i++) {
+          const lineY = boxY + i * thirdH;
+          ctx.moveTo(boxX, lineY);
+          ctx.lineTo(boxX + boxW, lineY);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      
+      ctx.save();
+      ctx.strokeStyle = '#1e40af';
+      ctx.lineWidth = 2.5 / viewZoom;
+      ctx.setLineDash([6 / viewZoom, 6 / viewZoom]);
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+      ctx.setLineDash([]);
+      
+      ctx.fillStyle = '#2563eb';
+      const handleSize = 8 / viewZoom;
+      const pts = [
+        [boxX, boxY], [boxX+boxW/2, boxY], [boxX+boxW, boxY],
+        [boxX, boxY+boxH/2], [boxX+boxW, boxY+boxH/2],
+        [boxX, boxY+boxH], [boxX+boxW/2, boxY+boxH], [boxX+boxW, boxY+boxH]
+      ];
+      pts.forEach(p => ctx.fillRect(p[0]-handleSize/2, p[1]-handleSize/2, handleSize, handleSize));
+      ctx.restore();
+      
+      ctx.restore();
+      
+      dimDisplay.textContent = `画布 ${state.targetWidth} × ${state.targetHeight} | 偏移 (${Math.round(state.offsetX)},${Math.round(state.offsetY)}) | 缩放 ${Math.round(viewZoom*100)}%`;
+    }
+
+    function handleWheel(e) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const worldPos = canvasToWorld(mouseX, mouseY);
+      const delta = -Math.sign(e.deltaY) * 0.1;
+      const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, viewZoom * (1 + delta)));
+      viewPanX = mouseX - worldPos.x * newZoom;
+      viewPanY = mouseY - worldPos.y * newZoom;
+      viewZoom = newZoom;
+      drawPreview();
+    }
+
+    function handleMouseDown(e) {
+      if (state.activeIndex === -1) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const world = canvasToWorld(mx, my);
+      const worldX = world.x, worldY = world.y;
+      
+      const scale = displayTransform.scale;
+      const boxX = displayTransform.offsetX - state.offsetX * scale;
+      const boxY = displayTransform.offsetY - state.offsetY * scale;
+      const boxW = state.targetWidth * scale;
+      const boxH = state.targetHeight * scale;
+      
+      const thr = 12 / viewZoom;
+      const left = Math.abs(worldX - boxX) < thr;
+      const right = Math.abs(worldX - (boxX+boxW)) < thr;
+      const top = Math.abs(worldY - boxY) < thr;
+      const bottom = Math.abs(worldY - (boxY+boxH)) < thr;
+      const inside = worldX >= boxX && worldX <= boxX+boxW && worldY >= boxY && worldY <= boxY+boxH;
+      
+      if (left && top) dragMode = 'nw';
+      else if (right && top) dragMode = 'ne';
+      else if (left && bottom) dragMode = 'sw';
+      else if (right && bottom) dragMode = 'se';
+      else if (left && inside) dragMode = 'w';
+      else if (right && inside) dragMode = 'e';
+      else if (top && inside) dragMode = 'n';
+      else if (bottom && inside) dragMode = 's';
+      else if (inside) dragMode = 'move';
+      else return;
+      
+      isDragging = true;
+      dragStart = { x: worldX, y: worldY };
+      dragStartOffset = { x: state.offsetX, y: state.offsetY };
+      dragStartSize = { w: state.targetWidth, h: state.targetHeight };
+      
+      canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('mouseup', handleMouseUp);
+      canvas.addEventListener('mouseleave', handleMouseUp);
+      e.preventDefault();
+    }
+
+    function handleMouseMove(e) {
+      if (!isDragging) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const world = canvasToWorld(mx, my);
+      const worldX = world.x, worldY = world.y;
+      
+      const scale = displayTransform.scale;
+      const dx = (worldX - dragStart.x) / scale;
+      const dy = (worldY - dragStart.y) / scale;
+      
+      const img = state.images[state.activeIndex];
+      const imgW = img.width, imgH = img.height;
+      
+      if (dragMode === 'move') {
+        let newX = dragStartOffset.x - dx;
+        let newY = dragStartOffset.y - dy;
+        state.offsetX = Math.min(Math.max(0, newX), Math.max(0, state.targetWidth - imgW));
+        state.offsetY = Math.min(Math.max(0, newY), Math.max(0, state.targetHeight - imgH));
+      } else {
+        let newW = dragStartSize.w, newH = dragStartSize.h;
+        let newOffX = dragStartOffset.x, newOffY = dragStartOffset.y;
+        
+        if (dragMode.includes('e')) newW = Math.max(10, dragStartSize.w + dx);
+        if (dragMode.includes('w')) { newW = Math.max(10, dragStartSize.w - dx); newOffX = dragStartOffset.x + dx; }
+        if (dragMode.includes('s')) newH = Math.max(10, dragStartSize.h + dy);
+        if (dragMode.includes('n')) { newH = Math.max(10, dragStartSize.h - dy); newOffY = dragStartOffset.y + dy; }
+        
+        if (state.keepRatio) {
+          const ratio = state.ratioValue;
+          if (dragMode === 'e' || dragMode === 'w') newH = newW / ratio;
+          else if (dragMode === 'n' || dragMode === 's') newW = newH * ratio;
+          else if (dragMode.length === 2) {
+            const avg = (newW / ratio + newH) / 2;
+            newH = avg;
+            newW = avg * ratio;
+          }
+        }
+        
+        state.targetWidth = Math.round(newW);
+        state.targetHeight = Math.round(newH);
+        state.offsetX = Math.min(Math.max(0, newOffX), Math.max(0, state.targetWidth - imgW));
+        state.offsetY = Math.min(Math.max(0, newOffY), Math.max(0, state.targetHeight - imgH));
+      }
+      
+      updateUI();
+      updateOffsetDisplay();
+      drawPreview();
+    }
+
+    function handleMouseUp() {
+      isDragging = false;
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('mouseup', handleMouseUp);
+    }
+
+    function setRatio(ratioStr) {
+      if (ratioStr === 'free') {
+        state.keepRatio = false;
+      } else {
+        state.keepRatio = true;
+        const [w, h] = ratioStr.split(':').map(Number);
+        state.ratioValue = w / h;
+        if (state.targetWidth / state.targetHeight !== state.ratioValue) {
+          state.targetHeight = Math.round(state.targetWidth / state.ratioValue);
+        }
+      }
+      if (state.activeIndex !== -1) clampOffset(state.images[state.activeIndex].width, state.images[state.activeIndex].height);
+      updateUI();
+      drawPreview();
+    }
+
+    // 批量处理 —— 应用当前偏移量，并针对每张图片约束边界
+    async function processAll() {
+      if (state.images.length === 0) { alert('请上传图片'); return; }
+      statusMsg.textContent = '打包中...';
+      const zip = new JSZip();
+      const bg = state.bgType;
+      for (let imgObj of state.images) {
+        const img = imgObj.imgElement;
+        const imgW = imgObj.width, imgH = imgObj.height;
+        // 对每张图片计算有效偏移量 (不能超出画布)
+        const maxX = Math.max(0, state.targetWidth - imgW);
+        const maxY = Math.max(0, state.targetHeight - imgH);
+        const offX = Math.min(maxX, Math.max(0, state.offsetX));
+        const offY = Math.min(maxY, Math.max(0, state.offsetY));
+        
+        const c = document.createElement('canvas');
+        c.width = state.targetWidth; c.height = state.targetHeight;
+        const ictx = c.getContext('2d');
+        if (bg !== 'transparent') { ictx.fillStyle = bg; ictx.fillRect(0,0,c.width,c.height); }
+        ictx.drawImage(img, offX, offY);
+        
+        let mime = 'image/png', ext = 'png';
+        if (state.keepFormat) {
+          if (imgObj.file.type === 'image/jpeg') { mime = 'image/jpeg'; ext = 'jpg'; }
+          else if (imgObj.file.type === 'image/webp') { mime = 'image/webp'; ext = 'webp'; }
+        }
+        const blob = await new Promise(r => c.toBlob(r, mime));
+        zip.file(imgObj.name.replace(/\.[^/.]+$/, '') + '_canvas.' + ext, blob);
+      }
+      const content = await zip.generateAsync({type:'blob'});
+      saveAs(content, 'extended_images.zip');
+      statusMsg.textContent = `✅ 已导出 ${state.images.length} 张 (应用当前偏移)`;
+    }
+
+    // 渲染缩略图 (带删除按钮)
+    function renderThumbs() {
+      if (!state.images.length) {
+        thumbList.innerHTML = '<div style="color:#94a3b8; text-align:center; padding:30px;">点击上传图片</div>';
+        return;
+      }
+      let html = '';
+      state.images.forEach((img, i) => {
+        html += `<div class="thumb-item ${i===state.activeIndex?'active':''}" data-index="${i}">
+          <img class="thumb-img" src="${img.imgElement.src}">
+          <div class="thumb-info">
+            <div class="thumb-name">${img.name}</div>
+            <div class="thumb-size">${img.width}×${img.height}</div>
+          </div>
+          <button class="thumb-delete" data-delete-index="${i}" title="删除">✕</button>
+        </div>`;
+      });
+      thumbList.innerHTML = html;
+      
+      // 绑定点击切换
+      document.querySelectorAll('.thumb-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (e.target.classList.contains('thumb-delete')) return;
+          const idx = parseInt(el.dataset.index);
+          setActive(idx);
+        });
+      });
+      
+      // 绑定删除按钮
+      document.querySelectorAll('.thumb-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.deleteIndex);
+          deleteImage(idx);
+        });
+      });
+    }
+    
+    function deleteImage(index) {
+      if (index < 0 || index >= state.images.length) return;
+      state.images.splice(index, 1);
+      if (state.images.length === 0) {
+        state.activeIndex = -1;
+      } else {
+        if (state.activeIndex >= state.images.length) state.activeIndex = state.images.length - 1;
+        else if (state.activeIndex === index) {
+          // 如果删除的是当前活动图片，则激活第一个
+          state.activeIndex = Math.min(index, state.images.length - 1);
+        }
+      }
+      renderThumbs();
+      if (state.activeIndex !== -1) {
+        setActive(state.activeIndex);
+      } else {
+        ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+        dimDisplay.textContent = '';
+        statusMsg.textContent = '队列已空';
+      }
+    }
+    
+    function clearAllImages() {
+      if (state.images.length === 0) return;
+      state.images = [];
+      state.activeIndex = -1;
+      renderThumbs();
+      ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+      dimDisplay.textContent = '';
+      statusMsg.textContent = '队列已清空';
+    }
+    
+    function setActive(idx) {
+      if (idx < 0 || idx >= state.images.length) return;
+      state.activeIndex = idx;
+      const img = state.images[idx];
+      // 约束偏移量
+      clampOffset(img.width, img.height);
+      updateOffsetDisplay();
+      renderThumbs();
+      drawPreview();
+      statusMsg.textContent = `当前: ${img.name}`;
+    }
+
+    function init() {
+      document.getElementById('uploadBtn').addEventListener('click', ()=> document.getElementById('fileInput').click());
+      document.getElementById('clearAllBtn').addEventListener('click', clearAllImages);
+      
+      document.getElementById('fileInput').addEventListener('change', e => {
+        const files = Array.from(e.target.files).slice(0,30);
+        let loaded = 0;
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = ev => {
+            const img = new Image();
+            img.src = ev.target.result;
+            img.onload = () => {
+              state.images.push({ id: Date.now()+Math.random(), file, imgElement: img, width: img.width, height: img.height, name: file.name });
+              loaded++;
+              if (loaded === files.length) {
+                renderThumbs();
+                if (state.activeIndex === -1 && state.images.length) setActive(0);
+              }
+            };
+          };
+          reader.readAsDataURL(file);
+        });
+        renderThumbs();
+        e.target.value = '';
+      });
+      
+      canvas.addEventListener('mousedown', handleMouseDown);
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
+      canvas.addEventListener('dblclick', resetView);
+      document.getElementById('resetViewBtn').addEventListener('click', resetView);
+      
+      showGuideCheck.addEventListener('change', e => {
+        state.showGuide = e.target.checked;
+        drawPreview();
+      });
+      
+      widthInput.addEventListener('input', ()=>{
+        let v = parseInt(widthInput.value)||10;
+        if (state.keepRatio) state.targetHeight = Math.round(v / state.ratioValue);
+        state.targetWidth = v;
+        if (state.activeIndex!==-1) clampOffset(state.images[state.activeIndex].width, state.images[state.activeIndex].height);
+        updateUI(); drawPreview();
+      });
+      heightInput.addEventListener('input', ()=>{
+        let v = parseInt(heightInput.value)||10;
+        if (state.keepRatio) state.targetWidth = Math.round(v * state.ratioValue);
+        state.targetHeight = v;
+        if (state.activeIndex!==-1) clampOffset(state.images[state.activeIndex].width, state.images[state.activeIndex].height);
+        updateUI(); drawPreview();
+      });
+      
+      lockRatioBtn.addEventListener('click', ()=>{
+        state.keepRatio = !state.keepRatio;
+        if (state.keepRatio) state.ratioValue = state.targetWidth / state.targetHeight;
+        updateUI(); drawPreview();
+      });
+      
+      document.querySelectorAll('.ratio-btn').forEach(btn => btn.addEventListener('click', ()=> setRatio(btn.dataset.ratio)));
+      document.getElementById('centerBtn').addEventListener('click', centerOffset);
+      document.getElementById('fitImageBtn').addEventListener('click', fitCanvasToImage);
+      document.querySelectorAll('input[name="bgType"]').forEach(r => r.addEventListener('change', e=>{ state.bgType = e.target.value; drawPreview(); }));
+      document.getElementById('keepFormatCheck').addEventListener('change', e=> state.keepFormat = e.target.checked);
+      document.getElementById('processAllBtn').addEventListener('click', processAll);
+      document.getElementById('applyCurrentBtn').addEventListener('click', ()=>{ drawPreview(); statusMsg.textContent='预览已更新'; });
+    }
+
+    init();
+    updateUI();
+    drawPreview();
+  })();
+</script>
+</body>
+</html>
