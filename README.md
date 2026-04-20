@@ -3,7 +3,7 @@
 > 一款可以**自由拖拽选框**调整画布、保留透明像素、批量导出的在线工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![在线演示](https://img.shields.io/badge/Demo-在线体验-blue)](https://你的用户名.github.io/canvas-expander)
+[![在线演示](https://img.shields.io/badge/Demo-在线体验-blue)](https://Sugaria0427.github.io/image-canvas-expander)
 
 ---
 
@@ -19,7 +19,7 @@
 
 ### 🚀 在线使用
 
-👉 [立即体验（GitHub Pages）](https://你的用户名.github.io/canvas-expander)
+👉 [立即体验（GitHub Pages）](https://Sugaria0427.github.io/image-canvas-expander)
 
 ---
 
