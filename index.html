@@ -315,6 +315,12 @@
       font-size: 0.75rem;
       color: #64748b;
     }
+    .snap-option {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
   </style>
 </head>
 <body>
@@ -326,7 +332,7 @@
       <button class="lang-btn" data-lang="en">English</button>
     </div>
   </div>
-  <div class="sub" data-i18n="subtitle">拖拽选框边缘/角落调整画布 · 原图偏移量自由调节 · 滚轮缩放 · 批量导出</div>
+  <div class="sub" data-i18n="subtitle">拖拽选框边缘/角落调整画布 · 选框自由拖动无边界 · 滚轮缩放 · 批量导出</div>
 
   <div class="main-panel">
     <div class="library">
@@ -347,7 +353,7 @@
         <canvas id="previewCanvas" width="700" height="460"></canvas>
       </div>
       <div class="view-hint">
-        <span data-i18n="dragHint">拖动边/角调整画布 · 拖动选框移动位置 · 空白处拖拽平移视图</span>
+        <span data-i18n="dragHint">拖动边/角调整画布 · 拖动选框自由移动（无边界） · 空白处平移视图</span>
         <span data-i18n="zoomHint">滚轮缩放 · 双击重置视图</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
@@ -358,6 +364,11 @@
           </label>
           <button id="resetViewBtn" style="background:none; border:1px solid #cbd5e1; border-radius:20px; padding:2px 12px; font-size:0.75rem;" data-i18n="resetView">重置视图</button>
         </div>
+      </div>
+      <div class="snap-option">
+        <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem;">
+          <input type="checkbox" id="snapToEdgesCheck" checked> <span data-i18n="snapToEdges">🧲 贴近边缘吸附</span>
+        </label>
       </div>
     </div>
 
@@ -393,7 +404,7 @@
 
       <div class="offset-info">
         <span data-i18n="offsetLabel">📍 原图偏移: X </span><span id="offsetXVal">0</span> , Y <span id="offsetYVal">0</span>
-        <div style="font-size:0.7rem; margin-top:4px; color:#475569;" data-i18n="offsetHint">批量导出时将应用此偏移 (支持负值裁剪)</div>
+        <div style="font-size:0.7rem; margin-top:4px; color:#475569;" data-i18n="offsetHint">批量导出时将应用此偏移 (无限制，可自由裁剪/扩展)</div>
       </div>
 
       <div class="filename-input">
@@ -415,13 +426,13 @@
     const i18n = {
       zh: {
         title: '🖼️ 画布扩展 · Canvas Expander',
-        subtitle: '拖拽选框边缘/角落调整画布 · 原图偏移量自由调节 · 滚轮缩放 · 批量导出',
+        subtitle: '拖拽选框边缘/角落调整画布 · 选框自由拖动无边界 · 滚轮缩放 · 批量导出',
         imageList: '📁 图片列表',
         clearAllTitle: '清空所有图片',
         clearAll: '🗑️ 清空',
         uploadBtn: '+ 上传',
         thumbHint: '点击缩略图切换 · 点击 ✕ 删除单张',
-        dragHint: '拖动边/角调整画布 · 拖动选框移动位置 · 空白处拖拽平移视图',
+        dragHint: '拖动边/角调整画布 · 拖动选框自由移动（无边界） · 空白处平移视图',
         zoomHint: '滚轮缩放 · 双击重置视图',
         guideCheck: '📏 三等分参考线',
         resetView: '重置视图',
@@ -437,7 +448,7 @@
         black: '黑色',
         keepFormat: '保留原始格式',
         offsetLabel: '📍 原图偏移: X ',
-        offsetHint: '批量导出时将应用此偏移 (支持负值裁剪)',
+        offsetHint: '批量导出时将应用此偏移 (无限制，可自由裁剪/扩展)',
         filenamePlaceholder: '文件名前缀 (留空使用原图名)',
         processAll: '✨ 批量扩展并下载 (ZIP)',
         applyCurrent: '📋 应用到当前预览',
@@ -449,16 +460,17 @@
         statusExported: '✅ 已导出 {count} 张 (应用当前偏移)',
         alertNoImages: '请上传图片',
         defaultThumbPlaceholder: '点击上传图片',
+        snapToEdges: '🧲 贴近边缘吸附',
       },
       en: {
         title: '🖼️ Canvas Expander · Free Canvas',
-        subtitle: 'Drag edges/corners to resize canvas · Adjust offset freely · Mouse wheel zoom · Batch export',
+        subtitle: 'Drag edges/corners to resize canvas · Free movement (no boundaries) · Wheel zoom · Batch export',
         imageList: '📁 Image List',
         clearAllTitle: 'Clear all images',
         clearAll: '🗑️ Clear',
         uploadBtn: '+ Upload',
         thumbHint: 'Click thumbnail to switch · Click ✕ to delete',
-        dragHint: 'Drag edges/corners to resize · Drag box to move · Drag empty area to pan view',
+        dragHint: 'Drag edges/corners to resize · Drag box freely (no boundaries) · Drag empty area to pan',
         zoomHint: 'Wheel zoom · Double-click reset view',
         guideCheck: '📏 Rule of Thirds',
         resetView: 'Reset View',
@@ -474,7 +486,7 @@
         black: 'Black',
         keepFormat: 'Keep original format',
         offsetLabel: '📍 Offset: X ',
-        offsetHint: 'This offset will be applied during batch export (negative values allowed for cropping)',
+        offsetHint: 'This offset will be applied during batch export (unrestricted, allows free cropping/expansion)',
         filenamePlaceholder: 'Filename prefix (leave empty to use original)',
         processAll: '✨ Batch Expand & Download (ZIP)',
         applyCurrent: '📋 Apply to Preview',
@@ -486,6 +498,7 @@
         statusExported: '✅ Exported {count} images (offset applied)',
         alertNoImages: 'Please upload images',
         defaultThumbPlaceholder: 'Click to upload',
+        snapToEdges: '🧲 Snap to edges',
       }
     };
 
@@ -562,6 +575,7 @@
       bgType: 'transparent',
       keepFormat: true,
       showGuide: true,
+      snapToEdges: true,   // 新增：是否开启边缘吸附
     };
 
     let viewZoom = 1.0;
@@ -581,12 +595,13 @@
     const statusMsg = document.getElementById('statusMsg');
     const thumbList = document.getElementById('thumbList');
     const showGuideCheck = document.getElementById('showGuideCheck');
+    const snapCheck = document.getElementById('snapToEdgesCheck');
     const filenamePrefix = document.getElementById('filenamePrefix');
     
     const CANVAS_W = 700, CANVAS_H = 460;
     
     let isDragging = false;
-    let dragMode = null;          // 'move', 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w', 'pan'
+    let dragMode = null;
     let dragStart = { x: 0, y: 0 };
     let dragStartOffset = { x: 0, y: 0 };
     let dragStartSize = { w: 0, h: 0 };
@@ -626,16 +641,45 @@
       });
       document.getElementById('keepFormatCheck').checked = state.keepFormat;
       showGuideCheck.checked = state.showGuide;
+      snapCheck.checked = state.snapToEdges;
     }
 
-    function clampOffset(imgW, imgH) {
-      // 允许负值，使得画布可以小于原图（裁剪效果）
-      const minX = Math.min(0, state.targetWidth - imgW);
-      const maxX = Math.max(0, state.targetWidth - imgW);
-      const minY = Math.min(0, state.targetHeight - imgH);
-      const maxY = Math.max(0, state.targetHeight - imgH);
-      state.offsetX = Math.min(maxX, Math.max(minX, state.offsetX));
-      state.offsetY = Math.min(maxY, Math.max(minY, state.offsetY));
+    // 边缘吸附：将偏移量调整到最近的边缘（上下左右及中心）
+    function applySnap(imgW, imgH) {
+      if (!state.snapToEdges) return;
+      const snapThreshold = 15; // 像素阈值
+      const edges = [
+        { x: 0, y: 0 },                                           // 左上
+        { x: state.targetWidth - imgW, y: 0 },                     // 右上
+        { x: 0, y: state.targetHeight - imgH },                    // 左下
+        { x: state.targetWidth - imgW, y: state.targetHeight - imgH }, // 右下
+        { x: (state.targetWidth - imgW) / 2, y: 0 },               // 上中
+        { x: (state.targetWidth - imgW) / 2, y: state.targetHeight - imgH }, // 下中
+        { x: 0, y: (state.targetHeight - imgH) / 2 },              // 左中
+        { x: state.targetWidth - imgW, y: (state.targetHeight - imgH) / 2 }, // 右中
+        { x: (state.targetWidth - imgW) / 2, y: (state.targetHeight - imgH) / 2 } // 中心
+      ];
+      
+      let minDist = snapThreshold;
+      let snapPos = null;
+      for (const e of edges) {
+        const dist = Math.hypot(state.offsetX - e.x, state.offsetY - e.y);
+        if (dist < minDist) {
+          minDist = dist;
+          snapPos = e;
+        }
+      }
+      if (snapPos) {
+        state.offsetX = snapPos.x;
+        state.offsetY = snapPos.y;
+      }
+    }
+
+    // 不再强制约束范围，仅避免数值过大导致渲染异常（限制在合理范围）
+    function sanitizeOffset() {
+      const MAX_OFFSET = 100000;
+      state.offsetX = Math.min(MAX_OFFSET, Math.max(-MAX_OFFSET, state.offsetX));
+      state.offsetY = Math.min(MAX_OFFSET, Math.max(-MAX_OFFSET, state.offsetY));
     }
 
     function updateOffsetDisplay() {
@@ -648,7 +692,7 @@
       const img = state.images[state.activeIndex];
       state.offsetX = (state.targetWidth - img.width) / 2;
       state.offsetY = (state.targetHeight - img.height) / 2;
-      clampOffset(img.width, img.height);
+      sanitizeOffset();
       updateOffsetDisplay();
       drawPreview();
     }
@@ -666,7 +710,7 @@
       }
       state.offsetX = padding;
       state.offsetY = padding;
-      clampOffset(img.width, img.height);
+      sanitizeOffset();
       updateUI();
       updateOffsetDisplay();
       drawPreview();
@@ -802,7 +846,6 @@
       else if (bottom && inside) dragMode = 's';
       else if (inside) dragMode = 'move';
       else {
-        // 点击在选框外部 → 视图平移
         dragMode = 'pan';
         canvas.classList.add('dragging-view');
       }
@@ -828,7 +871,6 @@
       const worldX = world.x, worldY = world.y;
       
       if (dragMode === 'pan') {
-        // 视图平移
         const dx = mx - dragStart.x * viewZoom - viewPanX;
         const dy = my - dragStart.y * viewZoom - viewPanY;
         viewPanX = dragStartPan.x + dx;
@@ -845,15 +887,14 @@
       const imgW = img.width, imgH = img.height;
       
       if (dragMode === 'move') {
-        let newX = dragStartOffset.x - dx;
-        let newY = dragStartOffset.y - dy;
-        // 约束在有效范围内（允许负值）
-        const minX = Math.min(0, state.targetWidth - imgW);
-        const maxX = Math.max(0, state.targetWidth - imgW);
-        const minY = Math.min(0, state.targetHeight - imgH);
-        const maxY = Math.max(0, state.targetHeight - imgH);
-        state.offsetX = Math.min(maxX, Math.max(minX, newX));
-        state.offsetY = Math.min(maxY, Math.max(minY, newY));
+        // 完全自由移动，仅保持数值在安全范围内
+        state.offsetX = dragStartOffset.x - dx;
+        state.offsetY = dragStartOffset.y - dy;
+        sanitizeOffset();
+        // 如果开启吸附，尝试吸附
+        if (state.snapToEdges) {
+          applySnap(imgW, imgH);
+        }
       } else {
         let newW = dragStartSize.w, newH = dragStartSize.h;
         let newOffX = dragStartOffset.x, newOffY = dragStartOffset.y;
@@ -876,12 +917,12 @@
         
         state.targetWidth = Math.round(newW);
         state.targetHeight = Math.round(newH);
-        const minX = Math.min(0, state.targetWidth - imgW);
-        const maxX = Math.max(0, state.targetWidth - imgW);
-        const minY = Math.min(0, state.targetHeight - imgH);
-        const maxY = Math.max(0, state.targetHeight - imgH);
-        state.offsetX = Math.min(maxX, Math.max(minX, newOffX));
-        state.offsetY = Math.min(maxY, Math.max(minY, newOffY));
+        state.offsetX = newOffX;
+        state.offsetY = newOffY;
+        sanitizeOffset();
+        if (state.snapToEdges) {
+          applySnap(imgW, imgH);
+        }
       }
       
       updateUI();
@@ -908,7 +949,6 @@
           state.targetHeight = Math.round(state.targetWidth / state.ratioValue);
         }
       }
-      if (state.activeIndex !== -1) clampOffset(state.images[state.activeIndex].width, state.images[state.activeIndex].height);
       updateUI();
       drawPreview();
     }
@@ -926,14 +966,8 @@
       for (let i = 0; i < state.images.length; i++) {
         const imgObj = state.images[i];
         const img = imgObj.imgElement;
-        const imgW = imgObj.width, imgH = imgObj.height;
-        // 有效偏移量范围（允许负值）
-        const minX = Math.min(0, state.targetWidth - imgW);
-        const maxX = Math.max(0, state.targetWidth - imgW);
-        const minY = Math.min(0, state.targetHeight - imgH);
-        const maxY = Math.max(0, state.targetHeight - imgH);
-        const offX = Math.min(maxX, Math.max(minX, state.offsetX));
-        const offY = Math.min(maxY, Math.max(minY, state.offsetY));
+        const offX = state.offsetX;
+        const offY = state.offsetY;
         
         const c = document.createElement('canvas');
         c.width = state.targetWidth; c.height = state.targetHeight;
@@ -952,7 +986,7 @@
         if (prefix) {
           newName = `${prefix}_${baseName}.${ext}`;
         } else {
-          newName = `${baseName}.${ext}`;   // 不添加任何后缀
+          newName = `${baseName}.${ext}`;
         }
         
         const blob = await new Promise(r => c.toBlob(r, mime));
@@ -1033,7 +1067,7 @@
       if (idx < 0 || idx >= state.images.length) return;
       state.activeIndex = idx;
       const img = state.images[idx];
-      clampOffset(img.width, img.height);
+      sanitizeOffset();
       updateOffsetDisplay();
       renderThumbs();
       drawPreview();
@@ -1078,19 +1112,21 @@
         state.showGuide = e.target.checked;
         drawPreview();
       });
+
+      snapCheck.addEventListener('change', e => {
+        state.snapToEdges = e.target.checked;
+      });
       
       widthInput.addEventListener('input', ()=>{
         let v = parseInt(widthInput.value)||10;
         if (state.keepRatio) state.targetHeight = Math.round(v / state.ratioValue);
         state.targetWidth = v;
-        if (state.activeIndex!==-1) clampOffset(state.images[state.activeIndex].width, state.images[state.activeIndex].height);
         updateUI(); drawPreview();
       });
       heightInput.addEventListener('input', ()=>{
         let v = parseInt(heightInput.value)||10;
         if (state.keepRatio) state.targetWidth = Math.round(v * state.ratioValue);
         state.targetHeight = v;
-        if (state.activeIndex!==-1) clampOffset(state.images[state.activeIndex].width, state.images[state.activeIndex].height);
         updateUI(); drawPreview();
       });
       
